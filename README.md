@@ -6,7 +6,7 @@ This Firefox extension routes [AWS SSO](https://aws.amazon.com/single-sign-on/) 
 
 ## How It Works
 
-![](./img/sso.png)
+![](./img/sso.jpeg)
 
 When you click on "Management console" for any account/role in AWS SSO, it makes a request for signing tokens and then redirects you to the federation location. The extension intercepts this request and loads the federation location in a container. Container names are `<ACCOUNT_NAME> <ROLE_NAME>` and are assigned a random color/icon. You can change the colors/icons to whatever you like, as it only uses the container name to reference them.
 
