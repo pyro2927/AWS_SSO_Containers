@@ -100,7 +100,8 @@ function listener(details) {
           const createTabParams = {
             cookieStoreId: container.cookieStoreId,
             url: url,
-            pinned: false
+            pinned: false,
+            openerTabId: details.tabId
           };
 
           browser.tabs.create(createTabParams);
