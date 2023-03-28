@@ -132,7 +132,7 @@ function listener(details) {
 
 // Fetch our custom defined container name template
 function onGot(item) {
-  containerNameTemplate = item.template;
+  containerNameTemplate = item.template || "name role";
 }
 
 function onError(error) {
