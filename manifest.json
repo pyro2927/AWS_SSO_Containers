@@ -13,6 +13,7 @@
     "tabs",
     "cookies",
     "contextualIdentities",
+    "storage",
     "webRequest",
     "webRequestBlocking",
     "https://*.awsapps.com/start/*",
@@ -22,5 +23,8 @@
     "scripts": [
       "containerize.js"
     ]
+  },
+  "options_ui": {
+    "page": "options.html"
   }
 }

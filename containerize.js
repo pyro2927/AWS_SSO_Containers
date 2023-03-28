@@ -27,6 +27,8 @@ const availableContainerColors = [
   'purple',
 ]
 
+let containerNameTemplate = "name role";
+
 function randomIcon() {
   return availableContainerIcons[Math.random() * availableContainerIcons.length | 0]
 }
@@ -68,7 +70,19 @@ function listener(details) {
   // account is account ID and account name in parens
   let account = decodeURIComponent(details.originUrl.split("/")[7]);
   let accountName = account.split("(")[1].slice(0, -1);
-  const name = accountName + " " + accountRole;
+  let accountNumber = account.split(" ")[0];
+
+  const params = {
+    'name': accountName,
+    'number': accountNumber,
+    'role': accountRole
+  };
+
+  let name = containerNameTemplate;
+
+  for (const [key, value] of Object.entries(params)) {
+    name = name.replace(key, value);
+  }
 
   let str = '';
   let decoder = new TextDecoder("utf-8");
@@ -115,6 +129,19 @@ function listener(details) {
 
   return {};
 }
+
+// Fetch our custom defined container name template
+function onGot(item) {
+  containerNameTemplate = item.template;
+}
+
+function onError(error) {
+  console.log("No custom template for AWS SSO containers, using default");
+}
+
+let getting = browser.storage.sync.get("template");
+getting.then(onGot, onError);
+
 
 browser.webRequest.onBeforeRequest.addListener(
   listener,
