@@ -142,9 +142,12 @@ function onError(error) {
 let getting = browser.storage.sync.get("template");
 getting.then(onGot, onError);
 
-
 browser.webRequest.onBeforeRequest.addListener(
   listener,
-  {urls: ["https://*.amazonaws.com/federation/console?*"], types: ["xmlhttprequest"]},
+  {urls: [
+    "https://*.amazonaws.com/federation/console?*",
+    "https://*.amazonaws-us-gov.com/federation/console?*",
+    "https://*.amazonaws.cn/federation/console?*"
+  ], types: ["xmlhttprequest"]},
   ["blocking"]
 );
