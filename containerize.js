@@ -57,10 +57,12 @@ function prepareContainer({ name, color, icon, cb }) {
 
 function listener(details) {
 
-  // If we're in a container already, skip
+  // Temporarily commenting out as users seem to not like this
+  // https://github.com/pyro2927/AWS_SSO_Containers/issues/6
+  /*
   if (details.cookieStoreId != "firefox-default") {
     return {};
-  }
+  }*/
 
   // Intercept our response
   let filter = browser.webRequest.filterResponseData(details.requestId);
