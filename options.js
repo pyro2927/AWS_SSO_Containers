@@ -1,7 +1,8 @@
 let examples = {
   'name': 'Prod',
   'number': '123456',
-  'role': 'InfraEng'
+  'role': 'InfraEng',
+  'subdomain': 'MegaCorp'
 };
 
 function saveOptions(e) {

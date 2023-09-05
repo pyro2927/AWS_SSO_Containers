@@ -71,11 +71,16 @@ function listener(details) {
   let account = decodeURIComponent(details.originUrl.split("/")[7]);
   let accountName = account.split("(")[1].slice(0, -1);
   let accountNumber = account.split(" ")[0];
+  // pull subdomain for folks that might have multiple SSO
+  // portals that have access to the same account and role names
+  let host = /:\/\/([^\/]+)/.exec(details.originUrl)[1];
+  let subdomain = host.split(".")[0];
 
   const params = {
     'name': accountName,
     'number': accountNumber,
-    'role': accountRole
+    'role': accountRole,
+    'subdomain': subdomain
   };
 
   let name = containerNameTemplate;
