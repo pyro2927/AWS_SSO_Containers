@@ -125,8 +125,11 @@ function listener(details) {
             url: url,
             pinned: false
           };
-
-          browser.tabs.create(createTabParams);
+          // get index of tab we're about to remove, put ours at that spot
+          browser.tabs.get(details.tabId).then(function(tab) {
+            createTabParams.index = tab.index;
+            browser.tabs.create(createTabParams);
+          });
           browser.tabs.remove(details.tabId);
         }});
       } else {
