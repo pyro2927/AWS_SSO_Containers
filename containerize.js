@@ -71,8 +71,10 @@ function listener(details) {
   let accountRole = details.url.split("=")[2];
   // account is account ID and account name in parens
   let account = decodeURIComponent(details.originUrl.split("/")[7]);
-  let accountName = account.split("(")[1].slice(0, -1);
-  let accountNumber = account.split(" ")[0];
+  // getting fancy w/ regex to capture account names with parens
+  let capture = /^(\d+) \((.+)\)$/.exec(account);
+  let accountNumber = capture[1];
+  let accountName = capture[2];
   // pull subdomain for folks that might have multiple SSO
   // portals that have access to the same account and role names
   let host = /:\/\/([^\/]+)/.exec(details.originUrl)[1];
