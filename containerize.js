@@ -27,6 +27,8 @@ const availableContainerColors = [
   'purple',
 ]
 
+let containerNameTemplate = "name role";
+
 function randomIcon() {
   return availableContainerIcons[Math.random() * availableContainerIcons.length | 0]
 }
@@ -55,10 +57,12 @@ function prepareContainer({ name, color, icon, cb }) {
 
 function listener(details) {
 
-  // If we're in a container already, skip
+  // Temporarily commenting out as users seem to not like this
+  // https://github.com/pyro2927/AWS_SSO_Containers/issues/6
+  /*
   if (details.cookieStoreId != "firefox-default") {
     return {};
-  }
+  }*/
 
   // Intercept our response
   let filter = browser.webRequest.filterResponseData(details.requestId);
@@ -67,8 +71,27 @@ function listener(details) {
   let accountRole = details.url.split("=")[2];
   // account is account ID and account name in parens
   let account = decodeURIComponent(details.originUrl.split("/")[7]);
-  let accountName = account.split("(")[1].slice(0, -1);
-  const name = accountName + " " + accountRole;
+  // getting fancy w/ regex to capture account names with parens
+  let capture = /^(\d+) \((.+)\)$/.exec(account);
+  let accountNumber = capture[1];
+  let accountName = capture[2];
+  // pull subdomain for folks that might have multiple SSO
+  // portals that have access to the same account and role names
+  let host = /:\/\/([^\/]+)/.exec(details.originUrl)[1];
+  let subdomain = host.split(".")[0];
+
+  const params = {
+    'name': accountName,
+    'number': accountNumber,
+    'role': accountRole,
+    'subdomain': subdomain
+  };
+
+  let name = containerNameTemplate;
+
+  for (const [key, value] of Object.entries(params)) {
+    name = name.replace(key, value);
+  }
 
   let str = '';
   let decoder = new TextDecoder("utf-8");
@@ -102,8 +125,11 @@ function listener(details) {
             url: url,
             pinned: false
           };
-
-          browser.tabs.create(createTabParams);
+          // get index of tab we're about to remove, put ours at that spot
+          browser.tabs.get(details.tabId).then(function(tab) {
+            createTabParams.index = tab.index;
+            browser.tabs.create(createTabParams);
+          });
           browser.tabs.remove(details.tabId);
         }});
       } else {
@@ -116,8 +142,24 @@ function listener(details) {
   return {};
 }
 
+// Fetch our custom defined container name template
+function onGot(item) {
+  containerNameTemplate = item.template || "name role";
+}
+
+function onError(error) {
+  console.log("No custom template for AWS SSO containers, using default");
+}
+
+let getting = browser.storage.sync.get("template");
+getting.then(onGot, onError);
+
 browser.webRequest.onBeforeRequest.addListener(
   listener,
-  {urls: ["https://*.amazonaws.com/federation/console?*"], types: ["xmlhttprequest"]},
+  {urls: [
+    "https://*.amazonaws.com/federation/console?*",
+    "https://*.amazonaws-us-gov.com/federation/console?*",
+    "https://*.amazonaws.cn/federation/console?*"
+  ], types: ["xmlhttprequest"]},
   ["blocking"]
 );

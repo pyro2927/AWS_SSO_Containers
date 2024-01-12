@@ -1,10 +1,11 @@
 {
   "manifest_version": 2,
   "name": "AWS SSO Containers",
-  "version": "1.0",
+  "version": "1.5",
   "description": "Automatically places AWS SSO calls into containers.",
   "browser_specific_settings": {
     "gecko": {
+      "id": "{5c474add-03f0-4c67-9479-f32939d7599a}",
       "strict_min_version": "91.0"
     }
   },
@@ -13,14 +14,20 @@
     "tabs",
     "cookies",
     "contextualIdentities",
+    "storage",
     "webRequest",
     "webRequestBlocking",
     "https://*.awsapps.com/start/*",
-    "https://*.amazonaws.com/federation/console?*"
+    "https://*.amazonaws.com/federation/console?*",
+    "https://*.amazonaws-us-gov.com/federation/console?*",
+    "https://*.amazonaws.cn/federation/console?*"
   ],
   "background": {
     "scripts": [
       "containerize.js"
     ]
+  },
+  "options_ui": {
+    "page": "options.html"
   }
 }
