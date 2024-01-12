@@ -29,6 +29,8 @@ const availableContainerColors = [
 
 let containerNameTemplate = "name role";
 
+let accountMap = {};
+
 function randomIcon() {
   return availableContainerIcons[Math.random() * availableContainerIcons.length | 0]
 }
@@ -40,7 +42,7 @@ function randomColor() {
 function prepareContainer({ name, color, icon, cb }) {
   browser.contextualIdentities.query({
     name: name,
-  }).then(function(containers) {
+  }).then(function (containers) {
     if (containers.length >= 1) {
       cb(containers[0]);
     } else {
@@ -48,7 +50,7 @@ function prepareContainer({ name, color, icon, cb }) {
         name: name,
         color: color || randomColor(),
         icon: icon || randomIcon(),
-      }).then(function(container) {
+      }).then(function (container) {
         cb(container);
       });
     }
@@ -65,27 +67,28 @@ function listener(details) {
   }*/
 
   // Intercept our response
+
   let filter = browser.webRequest.filterResponseData(details.requestId);
 
+  let queryString = new URLSearchParams(details.url.split("?")[1]);
   // Parse some params for container name
-  let accountRole = details.url.split("=")[2];
-  // account is account ID and account name in parens
-  let account = decodeURIComponent(details.originUrl.split("/")[7]);
-  // getting fancy w/ regex to capture account names with parens
-  let capture = /^(\d+) \((.+)\)$/.exec(account);
-  let accountNumber = capture[1];
-  let accountName = capture[2];
+  let accountRole = queryString.get("role_name");
+  let accountNumber = queryString.get("account_id");
+
   // pull subdomain for folks that might have multiple SSO
   // portals that have access to the same account and role names
   let host = /:\/\/([^\/]+)/.exec(details.originUrl)[1];
   let subdomain = host.split(".")[0];
 
-  const params = {
-    'name': accountName,
+  let params = {
     'number': accountNumber,
     'role': accountRole,
     'subdomain': subdomain
   };
+  if(accountMap[accountNumber] !== undefined){
+    params["name"] = accountMap[accountNumber]["name"];
+    params["email"] = accountMap[accountNumber]["email"];
+  }
 
   let name = containerNameTemplate;
 
@@ -98,7 +101,7 @@ function listener(details) {
   let encoder = new TextEncoder();
 
   filter.ondata = event => {
-    str += decoder.decode(event.data, {stream: true});
+    str += decoder.decode(event.data, { stream: true });
   };
 
   filter.onstop = event => {
@@ -119,19 +122,21 @@ function listener(details) {
 
         // Generate our federation URI and open it in a container
         const url = object.signInFederationLocation + "?Action=login&SigninToken=" + object.signInToken + "&Issuer=" + encodeURIComponent(details.originUrl) + "&Destination=" + encodeURIComponent(destination);
-        prepareContainer({name: name, cb: function(container) {
-          const createTabParams = {
-            cookieStoreId: container.cookieStoreId,
-            url: url,
-            pinned: false
-          };
-          // get index of tab we're about to remove, put ours at that spot
-          browser.tabs.get(details.tabId).then(function(tab) {
-            createTabParams.index = tab.index;
-            browser.tabs.create(createTabParams);
-          });
-          browser.tabs.remove(details.tabId);
-        }});
+        prepareContainer({
+          name: name, cb: function (container) {
+            const createTabParams = {
+              cookieStoreId: container.cookieStoreId,
+              url: url,
+              pinned: false
+            };
+            // get index of tab we're about to remove, put ours at that spot
+            browser.tabs.get(details.tabId).then(function (tab) {
+              createTabParams.index = tab.index;
+              browser.tabs.create(createTabParams);
+            });
+            browser.tabs.remove(details.tabId);
+          }
+        });
       } else {
         filter.write(encoder.encode(str));
       }
@@ -140,6 +145,41 @@ function listener(details) {
   };
 
   return {};
+}
+function accountNameListener(details) {
+  // Intercept our response
+  let filter = browser.webRequest.filterResponseData(details.requestId);
+
+  let str = '';
+  let decoder = new TextDecoder("utf-8");
+  let encoder = new TextEncoder();
+
+  filter.ondata = event => {
+    str += decoder.decode(event.data, { stream: true });
+  };
+  filter.onstop = event => {
+    filter.write(encoder.encode(str));
+    // The first OPTIONS request has no response body
+    if (str.length > 0) {
+      // signInToken
+      // signInFederationLocation
+      // destination
+      const object = JSON.parse(str);
+
+      for (result of object.result) {
+        if(result["searchMetadata"]){
+          accountMap[result["searchMetadata"]["AccountId"]] = {
+            "name": result["searchMetadata"]["AccountName"],
+            "email": result["searchMetadata"]["AccountEmail"]
+          }
+        }
+      }
+    }
+    filter.close();
+  }
+  
+  return {};
+
 }
 
 // Fetch our custom defined container name template
@@ -156,10 +196,21 @@ getting.then(onGot, onError);
 
 browser.webRequest.onBeforeRequest.addListener(
   listener,
-  {urls: [
-    "https://*.amazonaws.com/federation/console?*",
-    "https://*.amazonaws-us-gov.com/federation/console?*",
-    "https://*.amazonaws.cn/federation/console?*"
-  ], types: ["xmlhttprequest"]},
+  {
+    urls: [
+      "https://*.amazonaws.com/federation/console?*",
+      "https://*.amazonaws-us-gov.com/federation/console?*",
+      "https://*.amazonaws.cn/federation/console?*"
+    ], types: ["xmlhttprequest"]
+  },
+  ["blocking"]
+);
+browser.webRequest.onBeforeRequest.addListener(
+  accountNameListener,
+  {
+    urls: [
+      "https://*.amazonaws.com/instance/appinstances"
+    ], types: ["xmlhttprequest"]
+  },
   ["blocking"]
 );

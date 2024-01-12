@@ -1,5 +1,6 @@
 let examples = {
   'name': 'Prod',
+  'email': 'Prod@example.com',
   'number': '123456',
   'role': 'InfraEng',
   'subdomain': 'MegaCorp'
