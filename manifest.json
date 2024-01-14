@@ -17,10 +17,13 @@
     "storage",
     "webRequest",
     "webRequestBlocking",
-    "https://*.awsapps.com/start/*",
+    "https://*.awsapps.com/*",
     "https://*.amazonaws.com/federation/console?*",
     "https://*.amazonaws-us-gov.com/federation/console?*",
-    "https://*.amazonaws.cn/federation/console?*"
+    "https://*.amazonaws.cn/federation/console?*",
+    "https://*.amazonaws.com/federation/instance/appinstances",
+    "https://*.amazonaws-us-gov.com/federation/instance/appinstances",
+    "https://*.amazonaws.cn/federation/instance/appinstances"
   ],
   "background": {
     "scripts": [
