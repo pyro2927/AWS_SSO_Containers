@@ -29,6 +29,7 @@ const availableContainerColors = [
 
 let containerNameTemplate = "name role";
 let containerNameLength = 0;
+let containerNameSlug = "";
 
 let accountMap = {};
 
@@ -95,6 +96,9 @@ function listener(details) {
 
   for (const [key, value] of Object.entries(params)) {
     name = name.replace(key, value);
+  }
+  if (containerNameSlug) {
+    name = name.replaceAll(containerNameSlug, "");
   }
   if (containerNameLength && name.length > containerNameLength) {
     name = name.substring(0, containerNameLength - 2) + "...";
@@ -308,13 +312,14 @@ async function samlListener(details) {
 function onGot(item) {
   containerNameTemplate = item.template || "name role";
   containerNameLength = item.length || 0;
+  containerNameSlug = item.slug || "";
 }
 
 function onError(error) {
   console.log("No custom template for AWS SSO containers, using default");
 }
 
-let getting = browser.storage.sync.get(["template", "length"]);
+let getting = browser.storage.sync.get(["template", "length", "slug"]);
 getting.then(onGot, onError);
 
 browser.webRequest.onBeforeRequest.addListener(
