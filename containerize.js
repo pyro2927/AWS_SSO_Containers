@@ -39,22 +39,20 @@ function randomColor() {
   return availableContainerColors[Math.random() * availableContainerColors.length | 0]
 }
 
-function prepareContainer({ name, color, icon, cb }) {
-  browser.contextualIdentities.query({
+async function prepareContainer({ name, color, icon }) {
+  const containers = await browser.contextualIdentities.query({
     name: name,
-  }).then(function (containers) {
-    if (containers.length >= 1) {
-      cb(containers[0]);
-    } else {
-      browser.contextualIdentities.create({
-        name: name,
-        color: color || randomColor(),
-        icon: icon || randomIcon(),
-      }).then(function (container) {
-        cb(container);
-      });
-    }
   });
+
+  if (containers.length >= 1) {
+    return containers[0];
+  } else {
+    return await browser.contextualIdentities.create({
+      name: name,
+      color: color || randomColor(),
+      icon: icon || randomIcon(),
+    });
+  }
 }
 
 function listener(details) {
