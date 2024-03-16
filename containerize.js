@@ -102,7 +102,7 @@ function listener(details) {
     str += decoder.decode(event.data, { stream: true });
   };
 
-  filter.onstop = event => {
+  filter.onstop = async event => {
 
     // The first OPTIONS request has no response body
     if (str.length > 0) {
@@ -120,21 +120,22 @@ function listener(details) {
 
         // Generate our federation URI and open it in a container
         const url = object.signInFederationLocation + "?Action=login&SigninToken=" + object.signInToken + "&Issuer=" + encodeURIComponent(details.originUrl) + "&Destination=" + encodeURIComponent(destination);
-        prepareContainer({
-          name: name, cb: function (container) {
-            const createTabParams = {
-              cookieStoreId: container.cookieStoreId,
-              url: url,
-              pinned: false
-            };
-            // get index of tab we're about to remove, put ours at that spot
-            browser.tabs.get(details.tabId).then(function (tab) {
-              createTabParams.index = tab.index;
-              browser.tabs.create(createTabParams);
-            });
-            browser.tabs.remove(details.tabId);
-          }
-        });
+
+        const container = await prepareContainer({ name });
+
+        const createTabParams = {
+          cookieStoreId: container.cookieStoreId,
+          url: url,
+          pinned: false
+        };
+
+        // get index of tab we're about to remove, put ours at that spot
+        const tab = await browser.tabs.get(details.tabId);
+
+        createTabParams.index = tab.index;
+        browser.tabs.create(createTabParams);
+
+        browser.tabs.remove(details.tabId);
       } else {
         filter.write(encoder.encode(str));
       }
