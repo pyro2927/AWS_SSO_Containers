@@ -17,6 +17,7 @@
     "storage",
     "webRequest",
     "webRequestBlocking",
+    "https://signin.aws.amazon.com/saml",
     "https://*.awsapps.com/start/*",
     "https://*.amazonaws.com/federation/console?*",
     "https://*.amazonaws-us-gov.com/federation/console?*",

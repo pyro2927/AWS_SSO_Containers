@@ -39,22 +39,20 @@ function randomColor() {
   return availableContainerColors[Math.random() * availableContainerColors.length | 0]
 }
 
-function prepareContainer({ name, color, icon, cb }) {
-  browser.contextualIdentities.query({
+async function prepareContainer({ name, color, icon }) {
+  const containers = await browser.contextualIdentities.query({
     name: name,
-  }).then(function (containers) {
-    if (containers.length >= 1) {
-      cb(containers[0]);
-    } else {
-      browser.contextualIdentities.create({
-        name: name,
-        color: color || randomColor(),
-        icon: icon || randomIcon(),
-      }).then(function (container) {
-        cb(container);
-      });
-    }
   });
+
+  if (containers.length >= 1) {
+    return containers[0];
+  } else {
+    return await browser.contextualIdentities.create({
+      name: name,
+      color: color || randomColor(),
+      icon: icon || randomIcon(),
+    });
+  }
 }
 
 function listener(details) {
@@ -104,7 +102,7 @@ function listener(details) {
     str += decoder.decode(event.data, { stream: true });
   };
 
-  filter.onstop = event => {
+  filter.onstop = async event => {
 
     // The first OPTIONS request has no response body
     if (str.length > 0) {
@@ -122,21 +120,22 @@ function listener(details) {
 
         // Generate our federation URI and open it in a container
         const url = object.signInFederationLocation + "?Action=login&SigninToken=" + object.signInToken + "&Issuer=" + encodeURIComponent(details.originUrl) + "&Destination=" + encodeURIComponent(destination);
-        prepareContainer({
-          name: name, cb: function (container) {
-            const createTabParams = {
-              cookieStoreId: container.cookieStoreId,
-              url: url,
-              pinned: false
-            };
-            // get index of tab we're about to remove, put ours at that spot
-            browser.tabs.get(details.tabId).then(function (tab) {
-              createTabParams.index = tab.index;
-              browser.tabs.create(createTabParams);
-            });
-            browser.tabs.remove(details.tabId);
-          }
-        });
+
+        const container = await prepareContainer({ name });
+
+        const createTabParams = {
+          cookieStoreId: container.cookieStoreId,
+          url: url,
+          pinned: false
+        };
+
+        // get index of tab we're about to remove, put ours at that spot
+        const tab = await browser.tabs.get(details.tabId);
+
+        createTabParams.index = tab.index;
+        browser.tabs.create(createTabParams);
+
+        browser.tabs.remove(details.tabId);
       } else {
         filter.write(encoder.encode(str));
       }
@@ -182,6 +181,113 @@ function accountNameListener(details) {
 
 }
 
+async function samlListener(details) {
+  if (details.statusCode != 302) {
+    return {};
+  }
+
+  const setCookie = details.responseHeaders.find(header => header.name == "set-cookie");
+  const redirectUrl = details.responseHeaders.find(header => header.name == "location").value;
+
+  const cookies = setCookie.value.split('\n').map(fullCookie => fullCookie.split("; ").map(cookiePart => cookiePart.split('=')));
+
+  const encodedUserInfo = cookies.find(cookie => cookie[0][0] == "aws-userInfo")[0][1];
+  const userInfo = JSON.parse(decodeURIComponent(encodedUserInfo));
+  const roleArn = userInfo.arn;
+  const splitArn = roleArn.split(':');
+  const splitRole = splitArn[5].split('/');
+
+  const name = userInfo.alias;
+  const number = splitArn[4];
+  const role = splitRole[1];
+  const email = splitRole[2];
+  const subdomain = 'saml';
+
+  let params = { name, number, role, email, subdomain };
+
+  let containerName = containerNameTemplate;
+
+  for (const [key, value] of Object.entries(params)) {
+    containerName = containerName.replace(key, value);
+  }
+
+  const container = await prepareContainer({ name: containerName });
+
+  const cookieAttributeMapping = {
+    Path: 'path',
+    SameSite: 'sameSite',
+    Secure: 'secure',
+    Domain: 'domain',
+    Expires: 'expirationDate',
+    HttpOnly: 'httpOnly',
+  }
+
+  const sameSiteMapping = {
+    None: 'no_restriction',
+    Lax: 'lax',
+    Strict: 'strict',
+  }
+
+  for (const cookie of cookies) {
+    for (const cookieAttribute of cookie.slice(1)) {
+      if (cookieAttribute[0] == 'SameSite') {
+        cookieAttribute[1] = sameSiteMapping[cookieAttribute[1]];
+      }
+
+      if (cookieAttribute[0] == 'Max-Age') {
+        cookieAttribute[0] = 'expirationDate';
+        cookieAttribute[1] = Date.now() + parseInt(cookieAttribute[1]);
+      }
+
+      if (cookieAttribute[0] == 'Expires') {
+        cookieAttribute[0] = 'expirationDate';
+        cookieAttribute[1] = Date.parse(cookieAttribute[1]);
+      }
+
+      if (cookieAttribute.length == 1) {
+        cookieAttribute.push(true);
+      }
+
+      if (cookieAttributeMapping[cookieAttribute[0]]) {
+        cookieAttribute[0] = cookieAttributeMapping[cookieAttribute[0]];
+      }
+    }
+  }
+
+  const cookiesToSet = cookies.map(cookie => {
+    const [name, value] = cookie[0];
+
+    return {
+      ...Object.fromEntries(cookie.slice(1)),
+      name,
+      value,
+    };
+  });
+
+  for (const cookie of cookiesToSet) {
+    browser.cookies.set({
+      ...cookie,
+      url: details.url,
+      storeId: container.cookieStoreId,
+    });
+  }
+
+  const tab = await browser.tabs.get(details.tabId);
+
+  const createTabParams = {
+    cookieStoreId: container.cookieStoreId,
+    url: redirectUrl,
+    pinned: false,
+    index: tab.index,
+  };
+
+  browser.tabs.create(createTabParams);
+
+  browser.tabs.remove(details.tabId);
+
+  return { cancel: true };
+}
+
 // Fetch our custom defined container name template
 function onGot(item) {
   containerNameTemplate = item.template || "name role";
@@ -213,4 +319,13 @@ browser.webRequest.onBeforeRequest.addListener(
     ], types: ["xmlhttprequest"]
   },
   ["blocking"]
+);
+browser.webRequest.onHeadersReceived.addListener(
+  samlListener,
+  {
+    urls: [
+      "https://signin.aws.amazon.com/saml"
+    ], types: ["main_frame"]
+  },
+  ["responseHeaders", "blocking"]
 );
