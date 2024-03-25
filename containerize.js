@@ -123,19 +123,19 @@ function listener(details) {
 
         const container = await prepareContainer({ name });
 
-        const createTabParams = {
-          cookieStoreId: container.cookieStoreId,
-          url: url,
-          pinned: false
-        };
-
         // get index of tab we're about to remove, put ours at that spot
         const tab = await browser.tabs.get(details.tabId);
 
-        createTabParams.index = tab.index;
-        browser.tabs.create(createTabParams);
+        const createTabParams = {
+          cookieStoreId: container.cookieStoreId,
+          url: url,
+          pinned: false,
+          index: tab.index,
+        };
 
-        browser.tabs.remove(details.tabId);
+        await browser.tabs.create(createTabParams);
+
+        await browser.tabs.remove(details.tabId);
       } else {
         filter.write(encoder.encode(str));
       }
@@ -281,9 +281,9 @@ async function samlListener(details) {
     index: tab.index,
   };
 
-  browser.tabs.create(createTabParams);
+  await browser.tabs.create(createTabParams);
 
-  browser.tabs.remove(details.tabId);
+  await browser.tabs.remove(details.tabId);
 
   return { cancel: true };
 }
