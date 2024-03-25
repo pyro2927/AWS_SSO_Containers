@@ -68,14 +68,14 @@ function listener(details) {
 
   let filter = browser.webRequest.filterResponseData(details.requestId);
 
-  let queryString = new URLSearchParams(details.url.split("?")[1]);
+  const queryString = new URL(details.url).searchParams;
   // Parse some params for container name
   let accountRole = queryString.get("role_name");
   let accountNumber = queryString.get("account_id");
 
   // pull subdomain for folks that might have multiple SSO
   // portals that have access to the same account and role names
-  let host = /:\/\/([^\/]+)/.exec(details.originUrl)[1];
+  const host = new URL(details.originUrl).host;
   let subdomain = host.split(".")[0];
 
   let params = {
