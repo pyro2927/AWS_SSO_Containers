@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "AWS SSO Containers",
-  "version": "1.7",
+  "version": "1.8",
   "description": "Automatically places AWS SSO calls into containers.",
   "browser_specific_settings": {
     "gecko": {
