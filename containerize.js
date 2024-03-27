@@ -68,14 +68,14 @@ function listener(details) {
 
   let filter = browser.webRequest.filterResponseData(details.requestId);
 
-  let queryString = new URLSearchParams(details.url.split("?")[1]);
+  const queryString = new URL(details.url).searchParams;
   // Parse some params for container name
   let accountRole = queryString.get("role_name");
   let accountNumber = queryString.get("account_id");
 
   // pull subdomain for folks that might have multiple SSO
   // portals that have access to the same account and role names
-  let host = /:\/\/([^\/]+)/.exec(details.originUrl)[1];
+  const host = new URL(details.originUrl).host;
   let subdomain = host.split(".")[0];
 
   let params = {
@@ -123,19 +123,19 @@ function listener(details) {
 
         const container = await prepareContainer({ name });
 
-        const createTabParams = {
-          cookieStoreId: container.cookieStoreId,
-          url: url,
-          pinned: false
-        };
-
         // get index of tab we're about to remove, put ours at that spot
         const tab = await browser.tabs.get(details.tabId);
 
-        createTabParams.index = tab.index;
-        browser.tabs.create(createTabParams);
+        const createTabParams = {
+          cookieStoreId: container.cookieStoreId,
+          url: url,
+          pinned: false,
+          index: tab.index,
+        };
 
-        browser.tabs.remove(details.tabId);
+        await browser.tabs.create(createTabParams);
+
+        await browser.tabs.remove(details.tabId);
       } else {
         filter.write(encoder.encode(str));
       }
@@ -281,9 +281,9 @@ async function samlListener(details) {
     index: tab.index,
   };
 
-  browser.tabs.create(createTabParams);
+  await browser.tabs.create(createTabParams);
 
-  browser.tabs.remove(details.tabId);
+  await browser.tabs.remove(details.tabId);
 
   return { cancel: true };
 }
