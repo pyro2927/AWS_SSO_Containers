@@ -69,9 +69,7 @@ function listener(details) {
   let filter = browser.webRequest.filterResponseData(details.requestId);
 
   const queryString = new URL(details.url).searchParams;
-
   const originParams = new URLSearchParams(details.originUrl.split('?').slice(1).join('?'));
-  
 
   // Parse some params for container name
   let accountRole = queryString.get("role_name");
