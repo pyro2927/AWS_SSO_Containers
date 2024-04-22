@@ -75,7 +75,7 @@ function listener(details) {
 
   // Parse some params for container name
   let accountRole = queryString.get("role_name");
-  let accountNumber = queryString.get("account_id"); 
+  let accountNumber = queryString.get("account_id");
 
   // pull subdomain for folks that might have multiple SSO
   // portals that have access to the same account and role names
