@@ -69,9 +69,13 @@ function listener(details) {
   let filter = browser.webRequest.filterResponseData(details.requestId);
 
   const queryString = new URL(details.url).searchParams;
+
+  const originParams = new URLSearchParams(details.originUrl.split('?').slice(1).join('?'));
+  
+
   // Parse some params for container name
   let accountRole = queryString.get("role_name");
-  let accountNumber = queryString.get("account_id");
+  let accountNumber = queryString.get("account_id"); 
 
   // pull subdomain for folks that might have multiple SSO
   // portals that have access to the same account and role names
@@ -93,7 +97,7 @@ function listener(details) {
   for (const [key, value] of Object.entries(params)) {
     name = name.replace(key, value);
   }
-
+  let originDestination = originParams.get("destination");
   let str = '';
   let decoder = new TextDecoder("utf-8");
   let encoder = new TextEncoder();
@@ -106,6 +110,7 @@ function listener(details) {
 
     // The first OPTIONS request has no response body
     if (str.length > 0) {
+      console.log(originDestination);
       // signInToken
       // signInFederationLocation
       // destination
@@ -114,8 +119,13 @@ function listener(details) {
       // If we have a sign-in token, hijack this into a container
       if (object.signInToken) {
         let destination = object.destination;
-        if (!destination) {
-          destination = "https://console.aws.amazon.com";
+        if (!originDestination) {
+          if (!object.destination) {
+            destination = "https://console.aws.amazon.com";
+          }
+        }
+        else {
+          destination = originDestination;
         }
 
         // Generate our federation URI and open it in a container
