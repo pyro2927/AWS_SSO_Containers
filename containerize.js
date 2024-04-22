@@ -108,7 +108,6 @@ function listener(details) {
 
     // The first OPTIONS request has no response body
     if (str.length > 0) {
-      console.log(originDestination);
       // signInToken
       // signInFederationLocation
       // destination
