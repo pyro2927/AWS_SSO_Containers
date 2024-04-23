@@ -121,7 +121,10 @@ function listener(details) {
         // Generate our federation URI and open it in a container
         const url = object.signInFederationLocation + "?Action=login&SigninToken=" + object.signInToken + "&Issuer=" + encodeURIComponent(details.originUrl) + "&Destination=" + encodeURIComponent(destination);
 
-        const container = await prepareContainer({ name });
+        // psuedo-hash these to prevent the same color appearing too often
+        const hashedColor = availableContainerColors[parseInt(accountNumber) % availableContainerColors.length];
+
+        const container = await prepareContainer({ name: name, color: hashedColor });
 
         // get index of tab we're about to remove, put ours at that spot
         const tab = await browser.tabs.get(details.tabId);
