@@ -69,6 +69,7 @@ function listener(details) {
   let filter = browser.webRequest.filterResponseData(details.requestId);
 
   const queryString = new URL(details.url).searchParams;
+  const originParams = new URLSearchParams(details.originUrl.split('?').slice(1).join('?'));
   // Parse some params for container name
   let accountRole = queryString.get("role_name");
   let accountNumber = queryString.get("account_id");
@@ -94,6 +95,7 @@ function listener(details) {
     name = name.replace(key, value);
   }
 
+  let originDestination = originParams.get("destination");
   let str = '';
   let decoder = new TextDecoder("utf-8");
   let encoder = new TextEncoder();
@@ -114,8 +116,15 @@ function listener(details) {
       // If we have a sign-in token, hijack this into a container
       if (object.signInToken) {
         let destination = object.destination;
+        if (originDestination) {
+          destination = originDestination;
+        }
         if (!destination) {
-          destination = "https://console.aws.amazon.com";
+          if (object.signInFederationLocation.includes("amazonaws-us-gov.com")) {
+            destination = "https://console.amazonaws-us-gov.com";
+          } else {
+            destination = "https://console.aws.amazon.com";
+          }
         }
 
         // Generate our federation URI and open it in a container
@@ -176,7 +185,7 @@ function accountNameListener(details) {
     }
     filter.close();
   }
-  
+
   return {};
 
 }
