@@ -118,7 +118,11 @@ function listener(details) {
         let destination = object.destination;
         if (!originDestination) {
           if (!object.destination) {
-            destination = "https://console.aws.amazon.com";
+            if (object.signInFederationLocation.includes("amazonaws-us-gov.com")) {
+              destination = "https://console.amazonaws-us-gov.com";
+            } else {
+              destination = "https://console.aws.amazon.com";
+            }
           }
         }
         else {
