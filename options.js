@@ -22,7 +22,7 @@ function populatePreview(text, length, slug) {
   if (slug) {
     text = text.replaceAll(slug, "");
   }
-  if (length && text.length > length) {
+  if (length && text.length > length && length > 0) {
     text = text.substring(0, length - 2) + "...";
   }
   document.querySelector("#preview").value = text;
