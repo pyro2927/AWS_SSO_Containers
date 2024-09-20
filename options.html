@@ -2,14 +2,33 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <style>
+      form div {
+        display:grid;
+        grid-template-columns: max-content max-content;
+        grid-gap:5px;
+      }
+      form div label {
+        text-align:right;
+      }
+    </style>
   </head>
 
   <body>
     <form>
-      <label>Container name template: <input type="text" id="template" name="template" /></label>
-      <br/>
-      <label>Preview: <input type="text" id="preview" readonly /></label>
-      <br/>
+      <div>
+        <label for="template">Container name template:</label>
+        <input type="text" id="template" name="template" size="40" />
+
+        <label for="preview">Preview:</label>
+        <input type="text" id="preview" readonly />
+
+        <label for="length">Maximum container name length:</label>
+        <input type="number" id="length" name="length" />
+
+        <label for="slug">Common name prefix to remove:</label>
+        <input type="text" id="slug" name="slug" />
+      </div>
       <p>Available variables:</p>
       <ul>
         <li>name</li>
@@ -18,7 +37,6 @@
         <li>role</li>
         <li>subdomain</li>
       </ul>
-      <br/>
       <button type="submit">Save</button>
     </form>
 
