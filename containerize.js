@@ -175,6 +175,7 @@ function listener(details) {
 
   return {};
 }
+
 function accountNameListener(details) {
   // Intercept our response
   let filter = browser.webRequest.filterResponseData(details.requestId);
@@ -208,16 +209,16 @@ function accountNameListener(details) {
   }
 
   return {};
-
 }
 
 async function samlListener(details) {
+  // check to make sure we only handle this on redirects
+  if (details.statusCode != 302) {
+    return {};
+  }
+
   async function process(result) {
     onGot(result);
-
-    if (details.statusCode != 302) {
-      return {};
-    }
 
     const setCookie = details.responseHeaders.find(header => header.name == "set-cookie");
     const redirectUrl = details.responseHeaders.find(header => header.name == "location").value;
