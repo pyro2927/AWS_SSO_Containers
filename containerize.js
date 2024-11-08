@@ -220,8 +220,8 @@ async function samlListener(details) {
   async function process(result) {
     onGot(result);
 
-    const setCookie = details.responseHeaders.find(header => header.name == "set-cookie");
-    const redirectUrl = details.responseHeaders.find(header => header.name == "location").value;
+    const setCookie = details.responseHeaders.find(header => header.name.toLowerCase() == "set-cookie");
+    const redirectUrl = details.responseHeaders.find(header => header.name.toLowerCase() == "location").value;
 
     const cookies = setCookie.value.split('\n').map(fullCookie => fullCookie.split("; ").map(cookiePart => cookiePart.split('=')));
 
