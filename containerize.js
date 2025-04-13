@@ -33,6 +33,11 @@ let containerNameSlug = "";
 
 let accountMap = {};
 
+let accountMapReadyResolve;
+let accountMapReady = new Promise((resolve) => {
+  accountMapReadyResolve = resolve;
+});
+
 function randomIcon() {
   return availableContainerIcons[Math.random() * availableContainerIcons.length | 0]
 }
@@ -57,8 +62,9 @@ async function prepareContainer({ name, color, icon }) {
   }
 }
 
+// if there's no 'name' in the params then it stays as 'name' in the final string
 function containerNameFromParams(params) {
-  let name = containerNameTemplate;
+  let name = containerNameTemplate; // "name role"
 
   for (const [key, value] of Object.entries(params)) {
     name = name.replace(key, value);
@@ -104,6 +110,8 @@ function listener(details) {
       'role': accountRole,
       'subdomain': subdomain
     };
+
+    await accountMapReady;
     if(accountMap[accountNumber] !== undefined){
       params["name"] = accountMap[accountNumber]["name"];
       params["email"] = accountMap[accountNumber]["email"];
@@ -204,6 +212,7 @@ function accountNameListener(details) {
           }
         }
       }
+      accountMapReadyResolve();
     }
     filter.close();
   }
