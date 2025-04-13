@@ -62,9 +62,8 @@ async function prepareContainer({ name, color, icon }) {
   }
 }
 
-// if there's no 'name' in the params then it stays as 'name' in the final string
 function containerNameFromParams(params) {
-  let name = containerNameTemplate; // "name role"
+  let name = containerNameTemplate;
 
   for (const [key, value] of Object.entries(params)) {
     name = name.replace(key, value);
