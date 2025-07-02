@@ -33,6 +33,11 @@ let containerNameSlug = "";
 
 let accountMap = {};
 
+let accountMapReadyResolve;
+let accountMapReady = new Promise((resolve) => {
+  accountMapReadyResolve = resolve;
+});
+
 function randomIcon() {
   return availableContainerIcons[Math.random() * availableContainerIcons.length | 0]
 }
@@ -104,6 +109,8 @@ function listener(details) {
       'role': accountRole,
       'subdomain': subdomain
     };
+
+    await accountMapReady;
     if(accountMap[accountNumber] !== undefined){
       params["name"] = accountMap[accountNumber]["name"];
       params["email"] = accountMap[accountNumber]["email"];
@@ -204,6 +211,7 @@ function accountNameListener(details) {
           }
         }
       }
+      accountMapReadyResolve();
     }
     filter.close();
   }
