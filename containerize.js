@@ -142,6 +142,8 @@ function listener(details) {
             if (!object.destination) {
               if (object.signInFederationLocation.includes("amazonaws-us-gov.com")) {
                 destination = "https://console.amazonaws-us-gov.com";
+              } else if (object.signInFederationLocation.includes("amazonaws.cn")) {
+                destination = "https://console.amazonaws.cn";
               } else {
                 destination = "https://console.aws.amazon.com";
               }
@@ -359,7 +361,9 @@ browser.webRequest.onBeforeRequest.addListener(
   accountNameListener,
   {
     urls: [
-      "https://*.amazonaws.com/instance/appinstances"
+      "https://*.amazonaws.com/instance/appinstances",
+      "https://*.amazonaws-us-gov.com/instance/appinstances", // not sure if this is needed
+      "https://*.amazonaws.cn/instance/appinstances"
     ], types: ["xmlhttprequest"]
   },
   ["blocking"]
@@ -368,7 +372,9 @@ browser.webRequest.onHeadersReceived.addListener(
   samlListener,
   {
     urls: [
-      "https://signin.aws.amazon.com/saml"
+      "https://signin.aws.amazon.com/saml",
+      "https://signin.amazonaws-us-gov.com/saml", // not sure if this is needed
+      "https://signin.amazonaws.cn/saml"
     ], types: ["main_frame"]
   },
   ["responseHeaders", "blocking"]
