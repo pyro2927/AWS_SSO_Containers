@@ -20,6 +20,8 @@
     "webRequestBlocking",
     "https://signin.aws.amazon.com/saml",
     "https://*.awsapps.com/start/*",
+    "https://*.portal.amazonaws.com/*",
+    "https://*.portal.app.aws/*",
     "https://*.amazonaws.com/federation/console?*",
     "https://*.amazonaws-us-gov.com/federation/console?*",
     "https://*.amazonaws.cn/federation/console?*",
