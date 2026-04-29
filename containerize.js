@@ -127,7 +127,6 @@ function listener(details) {
     };
 
     filter.onstop = async event => {
-
       // The first OPTIONS request has no response body
       if (str.length > 0) {
         // signInToken
@@ -352,7 +351,8 @@ browser.webRequest.onBeforeRequest.addListener(
     urls: [
       "https://*.amazonaws.com/federation/console?*",
       "https://*.amazonaws-us-gov.com/federation/console?*",
-      "https://*.amazonaws.cn/federation/console?*"
+      "https://*.amazonaws.cn/federation/console?*",
+      "https://*.amazonaws.com.cn/federation/console?*"
     ], types: ["xmlhttprequest"]
   },
   ["blocking"]
@@ -363,7 +363,8 @@ browser.webRequest.onBeforeRequest.addListener(
     urls: [
       "https://*.amazonaws.com/instance/appinstances",
       "https://*.amazonaws-us-gov.com/instance/appinstances", // not sure if this is needed
-      "https://*.amazonaws.cn/instance/appinstances"
+      "https://*.amazonaws.cn/instance/appinstances",
+      "https://*.amazonaws.com.cn/instance/appinstances"
     ], types: ["xmlhttprequest"]
   },
   ["blocking"]
