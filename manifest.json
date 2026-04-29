@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "AWS SSO Containers",
-  "version": "1.15",
+  "version": "1.16",
   "license": "SEE LICENSE",
   "description": "Automatically places AWS SSO calls into containers.",
   "browser_specific_settings": {
@@ -20,6 +20,8 @@
     "webRequestBlocking",
     "https://signin.aws.amazon.com/saml",
     "https://*.awsapps.com/start/*",
+    "https://*.portal.amazonaws.com/*",
+    "https://*.portal.app.aws/*",
     "https://*.amazonaws.com/federation/console?*",
     "https://*.amazonaws-us-gov.com/federation/console?*",
     "https://*.amazonaws.cn/federation/console?*",
