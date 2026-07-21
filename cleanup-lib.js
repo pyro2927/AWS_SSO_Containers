@@ -25,29 +25,6 @@ var CleanupLib = (function () {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  // Build the inner pattern (no anchors): variable tokens -> ".+?", literals escaped.
-  function templatePattern(template) {
-    const tokens = [...VARIABLE_TOKENS].sort((a, b) => b.length - a.length);
-    let pattern = "";
-    let i = 0;
-    outer: while (i < template.length) {
-      for (const token of tokens) {
-        if (template.startsWith(token, i)) {
-          pattern += ".+?";
-          i += token.length;
-          continue outer;
-        }
-      }
-      pattern += escapeRegex(template[i]);
-      i += 1;
-    }
-    return pattern;
-  }
-
-  function templateToRegex(template) {
-    return new RegExp("^" + templatePattern(template) + "$");
-  }
-
   // Segments of the template: each variable token -> ".+?", each literal char escaped.
   function templateSegments(template) {
     const tokens = [...VARIABLE_TOKENS].sort((a, b) => b.length - a.length);
@@ -65,6 +42,15 @@ var CleanupLib = (function () {
       i += 1;
     }
     return segs;
+  }
+
+  // The full inner pattern (no anchors): the segments joined.
+  function templatePattern(template) {
+    return templateSegments(template).join("");
+  }
+
+  function templateToRegex(template) {
+    return new RegExp("^" + templatePattern(template) + "$");
   }
 
   // A regex matching any PREFIX of a full render: nest each segment (after the
