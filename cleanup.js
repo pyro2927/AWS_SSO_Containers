@@ -106,3 +106,60 @@ browser.storage.onChanged.addListener((changes, area) => {
     reconfigureSchedule();
   }
 });
+
+// One pending grace timer per cookieStoreId.
+const pendingGraceTimers = new Map();
+
+function cancelGraceTimer(cookieStoreId) {
+  const handle = pendingGraceTimers.get(cookieStoreId);
+  if (handle !== undefined) {
+    clearTimeout(handle);
+    pendingGraceTimers.delete(cookieStoreId);
+  }
+}
+
+async function removeIfEmptyManaged(cookieStoreId) {
+  pendingGraceTimers.delete(cookieStoreId);
+  const ids = await getManagedIds();
+  if (!ids.includes(cookieStoreId)) {
+    return;
+  }
+  // Authoritative re-query at fire time.
+  if (!(await isEmpty(cookieStoreId))) {
+    return;
+  }
+  try {
+    await browser.contextualIdentities.remove(cookieStoreId);
+  } catch (e) {
+    // already gone
+  }
+  // onRemoved listener prunes the id; prune here too in case the remove threw
+  // because it was already gone and no event fires.
+  const after = (await getManagedIds()).filter((id) => id !== cookieStoreId);
+  await setManagedIds(after);
+}
+
+browser.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
+  const s = await getSettings();
+  if (!s.cleanupOnClose) {
+    return;
+  }
+  // removeInfo does not include cookieStoreId; the tab is already gone, so
+  // scan managed containers for any that are now empty and arm a timer.
+  const ids = await getManagedIds();
+  for (const id of ids) {
+    if (await isEmpty(id)) {
+      cancelGraceTimer(id);
+      const handle = setTimeout(() => {
+        removeIfEmptyManaged(id);
+      }, s.cleanupGraceSeconds * 1000);
+      pendingGraceTimers.set(id, handle);
+    }
+  }
+});
+
+browser.tabs.onCreated.addListener((tab) => {
+  if (tab.cookieStoreId) {
+    cancelGraceTimer(tab.cookieStoreId);
+  }
+});
