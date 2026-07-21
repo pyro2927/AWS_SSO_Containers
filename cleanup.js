@@ -163,3 +163,45 @@ browser.tabs.onCreated.addListener((tab) => {
     cancelGraceTimer(tab.cookieStoreId);
   }
 });
+
+async function getTemplate() {
+  const stored = await browser.storage.sync.get("template");
+  return stored.template || "name role";
+}
+
+// One-time-per-device backfill: mark pre-existing containers as managed only
+// when the template has a distinctive static signature (no false positives).
+async function runBackfillOnce() {
+  const stored = await browser.storage.local.get("backfillDone");
+  if (stored.backfillDone) {
+    return;
+  }
+  const template = await getTemplate();
+  if (CleanupLib.templateSignatureQualifies(template)) {
+    const all = await browser.contextualIdentities.query({});
+    const ids = await getManagedIds();
+    const set = new Set(ids);
+    for (const container of all) {
+      if (CleanupLib.matchesTemplate(container.name, template)) {
+        set.add(container.cookieStoreId);
+      }
+    }
+    await setManagedIds([...set]);
+  }
+  await browser.storage.local.set({ backfillDone: true });
+}
+
+browser.runtime.onMessage.addListener(async (message) => {
+  if (message && message.action === "cleanup-count") {
+    return { count: await countEmptyManaged() };
+  }
+  if (message && message.action === "cleanup-now") {
+    return { removed: await sweepEmptyContainers() };
+  }
+  return undefined;
+});
+
+(async function initCleanup() {
+  await runBackfillOnce();
+  await reconfigureSchedule();
+})();
