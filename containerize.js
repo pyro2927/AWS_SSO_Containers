@@ -46,6 +46,15 @@ function randomColor() {
   return availableContainerColors[Math.random() * availableContainerColors.length | 0]
 }
 
+async function recordManagedContainer(cookieStoreId) {
+  const stored = await browser.storage.local.get("managedContainerIds");
+  const ids = stored.managedContainerIds || [];
+  if (!ids.includes(cookieStoreId)) {
+    ids.push(cookieStoreId);
+    await browser.storage.local.set({ managedContainerIds: ids });
+  }
+}
+
 async function prepareContainer({ name, color, icon }) {
   const containers = await browser.contextualIdentities.query({
     name: name,
@@ -54,11 +63,13 @@ async function prepareContainer({ name, color, icon }) {
   if (containers.length >= 1) {
     return containers[0];
   } else {
-    return await browser.contextualIdentities.create({
+    const created = await browser.contextualIdentities.create({
       name: name,
       color: color || randomColor(),
       icon: icon || randomIcon(),
     });
+    await recordManagedContainer(created.cookieStoreId);
+    return created;
   }
 }
 
