@@ -81,3 +81,28 @@ browser.contextualIdentities.onRemoved.addListener(async (changeInfo) => {
     await setManagedIds(next);
   }
 });
+
+let scheduledIntervalHandle = null;
+
+async function reconfigureSchedule() {
+  if (scheduledIntervalHandle !== null) {
+    clearInterval(scheduledIntervalHandle);
+    scheduledIntervalHandle = null;
+  }
+  const s = await getSettings();
+  if (s.cleanupScheduled) {
+    scheduledIntervalHandle = setInterval(() => {
+      sweepEmptyContainers();
+    }, s.cleanupInterval * 60 * 1000);
+  }
+}
+
+// React to settings changes from the options page.
+browser.storage.onChanged.addListener((changes, area) => {
+  if (area !== "sync") {
+    return;
+  }
+  if (changes.cleanupScheduled || changes.cleanupInterval) {
+    reconfigureSchedule();
+  }
+});
