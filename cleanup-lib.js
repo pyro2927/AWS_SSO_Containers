@@ -70,6 +70,10 @@ var CleanupLib = (function () {
       return true;
     }
     // Truncated variant: names ending in "..." keep only a prefix of the render.
+    // We intentionally do NOT re-derive the exact `length` truncation point here
+    // (that would couple this to containerNameFromParams); a prefix match is
+    // enough because backfill is already gated on a distinctive template
+    // signature, and only "..."-suffixed names reach this branch.
     if (name.endsWith("...")) {
       const prefix = name.slice(0, -3);
       return templatePrefixRegex(template).test(prefix);
