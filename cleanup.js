@@ -70,3 +70,14 @@ async function sweepEmptyContainers() {
   await setManagedIds(survivors);
   return removed;
 }
+
+// Keep managedContainerIds tight: prune whenever ANY container is removed,
+// whether by us or by the user in Firefox settings.
+browser.contextualIdentities.onRemoved.addListener(async (changeInfo) => {
+  const removedId = changeInfo.contextualIdentity.cookieStoreId;
+  const ids = await getManagedIds();
+  const next = ids.filter((id) => id !== removedId);
+  if (next.length !== ids.length) {
+    await setManagedIds(next);
+  }
+});
