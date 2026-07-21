@@ -33,7 +33,9 @@
   ],
   "background": {
     "scripts": [
-      "containerize.js"
+      "cleanup-lib.js",
+      "containerize.js",
+      "cleanup.js"
     ]
   },
   "options_ui": {
