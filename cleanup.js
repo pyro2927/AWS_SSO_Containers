@@ -191,14 +191,16 @@ async function runBackfillOnce() {
   await browser.storage.local.set({ backfillDone: true });
 }
 
-browser.runtime.onMessage.addListener(async (message) => {
+// Non-async so we only return a Promise for messages we actually handle;
+// returning false for others lets any other listener respond (per MDN).
+browser.runtime.onMessage.addListener((message) => {
   if (message && message.action === "cleanup-count") {
-    return { count: await countEmptyManaged() };
+    return countEmptyManaged().then((count) => ({ count }));
   }
   if (message && message.action === "cleanup-now") {
-    return { removed: await sweepEmptyContainers() };
+    return sweepEmptyContainers().then((removed) => ({ removed }));
   }
-  return undefined;
+  return false;
 });
 
 (async function initCleanup() {
