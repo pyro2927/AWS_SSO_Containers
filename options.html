@@ -38,6 +38,26 @@
         <li>subdomain</li>
       </ul>
       <button type="submit">Save</button>
+
+      <hr />
+      <h3>Container cleanup</h3>
+      <div>
+        <label for="cleanupOnClose">Delete container when its last tab closes:</label>
+        <input type="checkbox" id="cleanupOnClose" name="cleanupOnClose" />
+
+        <label for="cleanupGraceSeconds">Grace period before deleting (seconds):</label>
+        <input type="number" id="cleanupGraceSeconds" name="cleanupGraceSeconds" min="0" />
+
+        <label for="cleanupScheduled">Periodically delete empty containers:</label>
+        <input type="checkbox" id="cleanupScheduled" name="cleanupScheduled" />
+
+        <label for="cleanupInterval">Cleanup interval (minutes):</label>
+        <input type="number" id="cleanupInterval" name="cleanupInterval" min="1" />
+      </div>
+      <p>
+        <button type="button" id="cleanupNow">Clean up empty containers now</button>
+        <span id="cleanupStatus"></span>
+      </p>
     </form>
 
     <script src="options.js"></script>

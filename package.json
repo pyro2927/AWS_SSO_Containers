@@ -1,0 +1,10 @@
+{
+  "name": "aws-sso-containers",
+  "version": "1.18.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Tests for the AWS SSO Containers extension pure logic.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

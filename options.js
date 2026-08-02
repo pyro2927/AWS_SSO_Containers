@@ -11,7 +11,11 @@ function saveOptions(e) {
   browser.storage.sync.set({
     template: document.querySelector("#template").value,
     length: document.querySelector("#length").value || 0,
-    slug: document.querySelector("#slug").value
+    slug: document.querySelector("#slug").value,
+    cleanupOnClose: document.querySelector("#cleanupOnClose").checked,
+    cleanupScheduled: document.querySelector("#cleanupScheduled").checked,
+    cleanupInterval: parseInt(document.querySelector("#cleanupInterval").value, 10) || 60,
+    cleanupGraceSeconds: parseInt(document.querySelector("#cleanupGraceSeconds").value, 10) || 30
   });
 }
 
@@ -36,6 +40,10 @@ function restoreOptions() {
     document.querySelector("#template").value = text;
     document.querySelector("#length").value = length || 0;
     document.querySelector("#slug").value = slug;
+    document.querySelector("#cleanupOnClose").checked = Boolean(result.cleanupOnClose);
+    document.querySelector("#cleanupScheduled").checked = Boolean(result.cleanupScheduled);
+    document.querySelector("#cleanupInterval").value = parseInt(result.cleanupInterval, 10) || 60;
+    document.querySelector("#cleanupGraceSeconds").value = parseInt(result.cleanupGraceSeconds, 10) || 30;
     populatePreview(text, length, slug);
   }
 
@@ -43,7 +51,10 @@ function restoreOptions() {
     console.log(`Error: ${error}`);
   }
 
-  let getting = browser.storage.sync.get(["template", "length", "slug"]);
+  let getting = browser.storage.sync.get([
+    "template", "length", "slug",
+    "cleanupOnClose", "cleanupScheduled", "cleanupInterval", "cleanupGraceSeconds"
+  ]);
   getting.then(setCurrentChoice, onError);
 }
 
@@ -63,4 +74,17 @@ document.querySelector("#slug").addEventListener("input", function(evt) {
   let template = document.querySelector("#template").value;
   let length = document.querySelector("#length").value;
   populatePreview(template, length, this.value || "");
+});
+document.querySelector("#cleanupNow").addEventListener("click", async function() {
+  const status = document.querySelector("#cleanupStatus");
+  const { count } = await browser.runtime.sendMessage({ action: "cleanup-count" });
+  if (count === 0) {
+    status.textContent = "No empty containers to remove.";
+    return;
+  }
+  if (!window.confirm(`Delete ${count} empty containers?`)) {
+    return;
+  }
+  const { removed } = await browser.runtime.sendMessage({ action: "cleanup-now" });
+  status.textContent = `Removed ${removed} containers.`;
 });
